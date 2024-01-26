@@ -74,6 +74,21 @@
         remark TEXT NOT NULL,
         infos TEXT DEFAULT '' NOT NULL
       )
+    `),
+    db.exec(`
+      CREATE VIEW http_view AS
+        select
+	        s.*,
+	        h.scheme,
+	        h.method,
+	        h.status,
+	        h.host,
+	        h.url,
+	        h.content_type
+        from
+	        session s
+        join http h on
+	        s.id == h.id;
     `)
   ),
 

@@ -3,7 +3,7 @@
 
   config = JSON.decode(pipy.load('config.json')),
 
-  { localTimeString, insert_connection, close_connection, select_log_proxy } = pipy.solve('db.js'),
+  { db, localTimeString, insert_connection, close_connection, select_log_proxy } = pipy.solve('db.js'),
 
   { capture } = pipy.solve('capture.js'),
 
@@ -53,7 +53,18 @@
       $=>$
       .handleMessageStart(
         msg => (
-          msg.head.path.startsWith('/upload/') ? (
+          msg.head.path.startsWith('/api/message-body/') ? (
+            (
+              record,
+              id = +msg.head.path.substring(18)
+            ) => (
+              (id > 0) && (record = db.sql(`select h.content_type, m.body from message m join http h on m.session_id == h.id where m.id = ${id}`).exec()?.[0]) ? (
+                _message = new Message({ status: 200, headers: { 'content-type': record.content_type || 'application/octet-stream' } }, record.body)
+              ) : (
+                _message = new Message({ status: 404 })
+              )
+            )
+          )() : msg.head.path.startsWith('/upload/') ? (
             _forward = 'upload'
           ) : msg.head.path.startsWith('/upgrade?') ? (
             _forward = 'upgrade'
@@ -83,7 +94,6 @@
           $=>$
           .replaceMessage((
             (
-              db = sqlite('pipy.db'),
               headers = { 'content-type': 'application/json' },
               web = new http.Directory('/admin', {
                 fs: false,

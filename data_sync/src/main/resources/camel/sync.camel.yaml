@@ -1,0 +1,221 @@
+- route:
+    id: route-0040
+    description: Access Logs Sync Job
+    nodePrefixId: route-571
+    from:
+      id: from-76cb
+      uri: kamelet:cron-source
+      parameters:
+        schedule: "{{schedule.cron}}"
+        message: Triggering Data Sync Job
+      steps:
+        - log:
+            id: log-3b98
+            message: ${body}
+        - to:
+            id: to-b3e2
+            description: Retrieve connected clients
+            uri: http
+            parameters:
+              httpMethod: GET
+              httpUri: "{{gateway.address}}/users"
+              authMethodPriority: Basic
+              authPassword: "{{gateway.auth.password}}"
+              authUsername: "{{gateway.auth.user}}"
+        - log:
+            id: log-f70b
+            message: "List of Active Clients : ${body}"
+        - unmarshal:
+            id: unmarshal-617a
+            json:
+              id: json-ac4d
+              library: Jackson
+              useList: true
+              enableFeatures: ACCEPT_SINGLE_VALUE_AS_ARRAY
+        - split:
+            id: split-ef98
+            expression:
+              simple:
+                id: simple-04b0
+                expression: ${body}
+            parallelProcessing: true
+            steps:
+              - doTry:
+                  id: doTry-c637
+                  doCatch:
+                    - id: doCatch-118f
+                      exception:
+                        - java.lang.Exception
+                      steps:
+                        - log:
+                            id: log-1d02
+                            message: >-
+                              Unable to process ${body} due to
+                              ${exceptionMessage()}
+                  steps:
+                    - multicast:
+                        id: multicast-745d
+                        parallelProcessing: true
+                        steps:
+                          - to:
+                              id: to-6763
+                              uri: direct
+                              parameters:
+                                name: max_id
+                          - to:
+                              id: to-fb13
+                              uri: direct
+                              parameters:
+                                name: activity_id
+- route:
+    id: route-6cbd
+    description: Find existing record index
+    nodePrefixId: route-973
+    from:
+      id: from-07ef
+      description: start
+      uri: direct
+      parameters:
+        name: max_id
+      steps:
+        - setProperty:
+            id: setProperty-6285
+            name: machine
+            expression:
+              simple:
+                id: simple-e98d
+                expression: ${body}
+        - to:
+            id: to-7f48
+            uri: sql
+            parameters:
+              query: >-
+                select COALESCE(MAX(cid), 0) as cid from access_logs where
+                machine = :#${exchangeProperty.machine}
+        - setProperty:
+            id: setProperty-5b65
+            name: cid
+            expression:
+              simple:
+                id: simple-6bbb
+                expression: ${body.get(0).get("cid")}
+        - to:
+            id: to-0e41
+            uri: direct
+            parameters:
+              name: get_totals
+- route:
+    id: route-ba3e
+    description: Retrieve Access Logs
+    nodePrefixId: route-01b
+    from:
+      id: from-fc1c
+      description: start
+      uri: direct
+      parameters:
+        name: logs
+      steps:
+        - log:
+            id: log-1fc4
+            message: >-
+              Fetching access log records of host machine
+              ${exchangeProperty.machine}
+        - setHeader:
+            id: setHeader-7f00
+            name: Exchange.HTTP_URI
+            expression:
+              simple:
+                id: simple-f185
+                expression: http://{{gateway.address}}/${exchangeProperty.machine}/api
+        - setBody:
+            id: setBody-bbbb
+            expression:
+              simple:
+                id: simple-1f63
+                expression: >-
+                  select * from pipy where id > ${exchangeProperty.cid} order by
+                  id limit {{batch.size}} offset
+                  (${exchangeProperty.CamelLoopIndex} * {{batch.size}})
+        - to:
+            id: to-12fd
+            description: Retrieve client ${body} logs
+            uri: http
+            parameters:
+              httpMethod: POST
+              httpUri: "{{gateway.address}}/"
+              authMethodPriority: Basic
+              authPassword: "{{gateway.auth.password}}"
+              authUsername: "{{gateway.auth.user}}"
+        - unmarshal:
+            id: unmarshal-f1bd
+            json:
+              id: json-1b52
+              library: Jackson
+              useList: true
+              enableFeatures: ACCEPT_SINGLE_VALUE_AS_ARRAY
+        - to:
+            id: to-d143
+            uri: direct
+            parameters:
+              name: handle_logs
+- route:
+    id: route-ecb1
+    description: Handle Access Logs
+    nodePrefixId: route-10f
+    from:
+      id: from-091a
+      uri: direct
+      parameters:
+        name: handle_logs
+      steps:
+        - choice:
+            id: choice-dec6
+            when:
+              - id: when-1b2b
+                expression:
+                  simple:
+                    id: simple-02e4
+                    expression: ${body.size} > 0
+                steps:
+                  - log:
+                      id: log-c59c
+                      message: >-
+                        Handling  ${body.size} log entries for host machine 
+                        ${exchangeProperty.machine}
+                  - to:
+                      id: to-6388
+                      uri: sql
+                      parameters:
+                        query: >-
+                          insert into
+                          access_logs(machine,cid,scheme,request_time,response_time,response_code,client_ip,host,url,user_agent,request_head,request_body,response_head,response_body,request_size,response_size,infos)
+                          values(:#${exchangeProperty.machine}, cast(:#id as
+                          INTEGER), :#scheme, to_timestamp(:#request_time,
+                          'YYYY/MM/DD/HH24:MI:ss'), cast(:#response_time as
+                          INTEGER), cast(:#response_code as INTEGER), 
+                          :#client_ip, :#host, :#url, :#user_agent,
+                          :#request_head, :#request_body, :#response_head,
+                          :#response_body, cast(:#request_size as INTEGER),
+                          cast(:#response_size as INTEGER),
+                          to_jsonb(:#infos::text))
+                        dataSource: "#bean:dataSource"
+                        batch: true
+                  - log:
+                      id: log-32e2
+                      message: Record Saved
+            otherwise:
+              id: otherwise-495e
+              steps:
+                - log:
+                    id: log-550c
+                    message: >-
+                      Skipping host machine  ${exchangeProperty.machine} due to
+                      ${body.size} new records received
+- beans:
+    - name: dataSource
+      properties:
+        url: jdbc:postgresql://{{db.host}}:{{db.port}}/{{db.name}}
+        driverClassName: org.postgresql.Driver
+        username: "{{db.user}}"
+        password: "{{db.password}}"
+      type: org.apache.commons.dbcp2.BasicDataSource

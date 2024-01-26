@@ -1,0 +1,11 @@
+{
+  "listen": "0.0.0.0:8000",
+  "guiListen": "0.0.0.0:8001",
+  "karavanListen": "0.0.0.0:8010",
+  "tlsCert": "tls/ca.crt",
+  "tlsKey": "tls/ca.key",
+  "tlsCA": "tls/ca.crt",
+  "username": "admin",
+  "password": "admin123",
+  "enableDebug": true
+}

@@ -1,0 +1,136 @@
+- route:
+    id: route-cde8
+    description: Get Delta Count
+    nodePrefixId: route-2b3
+    from:
+      id: from-0abf
+      description: start
+      uri: direct
+      parameters:
+        name: get_totals
+      steps:
+        - log:
+            id: log-1fc4
+            message: >-
+              Fetching count of new log records of host machine
+              ${exchangeProperty.machine}  with index > ${exchangeProperty.cid}
+        - setHeader:
+            id: setHeader-7f00
+            name: Exchange.HTTP_URI
+            expression:
+              simple:
+                id: simple-f185
+                expression: http://{{gateway.address}}/${exchangeProperty.machine}/api
+        - setBody:
+            id: setBody-bbbb
+            expression:
+              simple:
+                id: simple-1f63
+                expression: >-
+                  select count(*) as total from pipy where id >
+                  ${exchangeProperty.cid}
+        - to:
+            id: to-12fd
+            description: Retrieve client ${body} logs
+            uri: http
+            parameters:
+              httpMethod: POST
+              httpUri: "{{gateway.address}}/"
+              authMethodPriority: Basic
+              authPassword: "{{gateway.auth.password}}"
+              authUsername: "{{gateway.auth.user}}"
+        - unmarshal:
+            id: unmarshal-f1bd
+            json:
+              id: json-1b52
+              library: Jackson
+              useList: true
+              enableFeatures: ACCEPT_SINGLE_VALUE_AS_ARRAY
+        - setHeader:
+            id: setHeader-e7d4
+            name: total
+            expression:
+              simple:
+                id: simple-89ef
+                expression: ${body.get(0).get("total")}
+        - log:
+            id: log-6860
+            message: Delta of ${header.total} log entries
+        - to:
+            id: to-6c89
+            uri: direct
+            parameters:
+              name: loop
+- route:
+    id: route-ab06
+    description: Loop to retrieve delta items per batch size
+    nodePrefixId: route-2f1
+    from:
+      id: from-20bd
+      uri: direct
+      parameters:
+        name: loop
+      steps:
+        - process:
+            id: process-bbad
+            ref: LoopCounter
+        - loop:
+            id: loop-d195
+            expression:
+              header:
+                id: header-75ab
+                expression: loops
+            steps:
+              - to:
+                  id: to-d3a5
+                  uri: direct
+                  parameters:
+                    name: logs
+- route:
+    id: route-ba9e
+    description: Handle Activity Logs
+    nodePrefixId: route-32c
+    from:
+      id: from-121d
+      uri: direct
+      parameters:
+        name: activity_handle
+      steps:
+        - choice:
+            id: choice-dec8
+            when:
+              - id: when-1b2f
+                expression:
+                  simple:
+                    id: simple-02e6
+                    expression: ${body.size} > 0
+                steps:
+                  - log:
+                      id: log-c59c
+                      message: >-
+                        Handling  ${body.size} activity log entries for host
+                        machine  ${exchangeProperty.machine}
+                  - to:
+                      id: to-6389
+                      uri: sql
+                      parameters:
+                        query: >-
+                          insert into
+                          activity_logs(machine,cid,create_time,name,action,remark,infos)
+                          values(:#${exchangeProperty.machine}, cast(:#id as
+                          INTEGER), to_timestamp(:#create_time,
+                          'YYYY/MM/DD/HH24:MI:ss'), :#name, :#action, :#remark,
+                          to_jsonb(:#infos::text))
+                        dataSource: "#bean:dataSource"
+                        batch: true
+                  - log:
+                      id: log-32e4
+                      message: Activity Record Saved
+            otherwise:
+              id: otherwise-495f
+              steps:
+                - log:
+                    id: log-550e
+                    message: >-
+                      Skipping host machine  ${exchangeProperty.machine} due to
+                      ${body.size} new records received

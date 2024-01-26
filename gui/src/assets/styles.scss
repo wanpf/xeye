@@ -1,0 +1,156 @@
+/* You can add global styles to this file, and also import other style files */
+
+$gutter: 1rem; //for primeflex grid system
+@import '@/assets/layout/layout.scss';
+
+/* PrimeVue */
+// @import 'primevue/resources/primevue.min.css'; // version deplicated. You must open the command line if you are using < 3.29.00
+@import 'primeflex/primeflex.scss';
+@import 'primeicons/primeicons.css';
+
+/* Demos */
+@import '@/assets/demo/demo.scss';
+
+
+.app-top-bar.p-menubar {
+	padding:0 0 0 0.75em;
+	height: 50px;
+	background: #1e1e1e;
+	color: rgba(255, 255, 255, 0.87);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	border-radius: 0px;
+}
+.app-top-bar .p-submenu-list .p-menuitem-content{
+}
+.app-top-bar.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content {
+		height: 50px;
+		line-height: 50px;
+    color: rgba(255, 255, 255, 0.87);
+    transition: none;
+    border-radius: 0px;
+}
+.app-top-bar.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link {
+	color: rgba(255, 255, 255, 0.87);
+}
+.app-top-bar.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link{
+	padding: 0 0.75rem;
+}
+.app-top-bar.p-menubar .p-menubar-root-list > .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {
+    color: rgba(255, 255, 255, 0.87);
+    background: rgba(255, 255, 255, 0.04);
+}
+.app-top-bar .logo{
+	margin-right: 1.25em;
+	margin-left: 0.75em;
+}
+.app-top-bar.p-menubar>.p-menubar-root-list>.p-menuitem:not(.p-highlight):not(.p-disabled).p-focus > .p-menuitem-content,
+.app-top-bar.p-menubar>.p-menubar-root-list>.p-menuitem.p-menuitem-active > .p-menuitem-content,
+.app-top-bar.p-menubar>.p-menubar-root-list>.p-menuitem.p-highlight.p-focus > .p-menuitem-content {
+	background: var(--primary-color);
+	color: var(--primary-color-text) ;
+	font-weight: bold;
+}
+.p-card {
+	background: var(--surface-card);
+	border: 1px solid var(--surface-border);
+	box-shadow: var(--card-shadow);
+	border-radius: 12px !important;
+}
+.nopd.p-card .p-card-body,.nopd.p-card .p-card-content{
+	padding: 0;
+}
+.nopd .p-datatable .p-datatable-header{
+	border: none;
+	border-radius: 0;
+}
+
+.app-top-bar .p-menubar-root-list{
+	background: #1e1e1e;
+}
+.app-top-bar .p-avatar-icon{
+	color: #4b5563;
+}
+.app-top-bar .right-icon{
+	background: var(--primary-color);
+	height: 50px;
+	line-height: 50px;
+	border-radius: 0;
+	width: 50px;
+	text-align: center;
+	position: relative;
+	right: -1px;
+}
+.app-top-bar .right-icon .p-avatar-icon{
+	color: var(--primary-color-text);
+}
+.card, .p-card, .shadow, .block-section{
+	--card-shadow: 0px 4px 30px rgba(221, 224, 255, .54);
+	box-shadow: var(--card-shadow);
+}
+
+.surface-ground+.layout-config-button{
+	display: none !important;
+}
+.p-card.nopd{
+	border-radius: 0;
+	border: none;
+}
+.p-card.nopd .p-datatable-header{
+	padding: 0;
+}
+.p-card.nopd .p-datatable-header input.p-inputtext,
+.p-card.nopd .p-datatable-header .p-button{
+	border-radius: 0;
+	border-width: 0;
+	font-weight: bold;
+}
+
+.p-card.nopd .calendar-bar,
+.p-card.nopd .p-datatable-header .p-inputtext,
+.p-card.nopd .calendar-bar,
+.p-card.nopd .p-datatable-header .p-dropdown-trigger,
+.p-button-primary.calendar-icon{
+	background: rgba(99, 102, 241, 0.06) !important;
+	color: #4338CA;
+}
+.p-button-primary.calendar-icon{
+	padding-right: 0;
+}
+.p-card.nopd .p-datatable-header .p-dropdown{
+	border: none;
+}
+.p-card.nopd .p-datatable-header .p-dropdown .p-inputtext{
+	border-radius: 6px 0 0 6px;
+}
+.p-card.nopd .calendar-bar i{
+	position: relative;
+	top: 1px;
+}
+.p-card.nopd .p-paginator{
+	background: transparent;
+}
+.p-card.nopd .p-datatable-header .p-inputtext:focus,
+.p-card.nopd .p-datatable-header .p-button:focus,
+.p-card.nopd .p-datatable-header .p-calendar:not(.p-calendar-disabled).p-focus > .p-inputtext{
+	box-shadow:none;
+}
+.p-card.nopd .p-paginator{
+	padding: 0;
+}
+.border-block,.border-block .p-card-body,.border-block .block-header,.border-block .block-content{
+	border-radius: 0 !important;
+}
+.p-dataview-emptymessage{
+	padding:2rem;
+}
+.noheader .p-sidebar-header{
+	display: none;
+}
+.nocontentpd .p-card-content{
+	padding: 0;
+}
+pre.app-code code{
+	white-space: break-spaces;
+	word-break: break-all;
+	padding-right: 30px;
+}

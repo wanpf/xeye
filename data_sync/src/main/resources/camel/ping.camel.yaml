@@ -1,0 +1,149 @@
+- route:
+    id: route-96a1
+    description: Ping Job
+    nodePrefixId: route-8e0
+    from:
+      id: from-b9c8
+      uri: timer
+      parameters:
+        period: "{{ping.interval}}"
+        timerName: pinger
+      steps:
+        - to:
+            id: to-c304
+            description: Retrieve connected clients
+            uri: http
+            parameters:
+              httpMethod: GET
+              httpUri: "{{gateway.address}}/users"
+              authMethodPriority: Basic
+              authPassword: "{{gateway.auth.password}}"
+              authUsername: "{{gateway.auth.user}}"
+        - unmarshal:
+            id: unmarshal-3916
+            json:
+              id: json-251d
+              library: Jackson
+              useList: true
+              enableFeatures: ACCEPT_SINGLE_VALUE_AS_ARRAY
+        - split:
+            id: split-3a52
+            expression:
+              simple:
+                id: simple-a18a
+                expression: ${body}
+            parallelProcessing: true
+            steps:
+              - doTry:
+                  id: doTry-42da
+                  doCatch:
+                    - id: doCatch-ca6b
+                      exception:
+                        - java.lang.Exception
+                      steps:
+                        - log:
+                            id: log-c56f
+                            message: "Unable to ping due to: ${body}"
+                  steps:
+                    - to:
+                        id: to-fe34
+                        uri: direct
+                        parameters:
+                          name: pinger
+- route:
+    id: route-4421
+    description: Perform Ping Action
+    nodePrefixId: route-9f5
+    from:
+      id: from-d11b
+      uri: direct
+      parameters:
+        name: pinger
+      steps:
+        - log:
+            id: log-7b0f
+            message: Invoking Ping for target {{ping.target}} on machine ${body}
+        - setProperty:
+            id: setProperty-b8be
+            name: machine
+            expression:
+              simple:
+                id: simple-c42a
+                expression: ${body}
+        - setHeader:
+            id: setHeader-a6f0
+            name: Exchange.HTTP_URI
+            expression:
+              simple:
+                id: simple-b1ed
+                expression: >-
+                  http://{{gateway.address}}/${exchangeProperty.machine}/api/invoke
+        - setHeader:
+            id: setHeader-06ec
+            name: content-type
+            expression:
+              constant:
+                id: constant-b78c
+                expression: application/json
+        - setBody:
+            id: setBody-361a
+            expression:
+              simple:
+                id: simple-c0c8
+                expression: '{"verb": "ping", "target":"{{ping.target}}"}'
+        - to:
+            id: to-cb62
+            uri: http
+            parameters:
+              httpMethod: POST
+              httpUri: "{{gateway.address}}"
+              authMethodPriority: Basic
+              authPassword: "{{gateway.auth.password}}"
+              authUsername: "{{gateway.auth.user}}"
+        - unmarshal:
+            id: unmarshal-0725
+            json:
+              id: json-49e4
+              library: Jackson
+              allowUnmarshallType: false
+        - choice:
+            id: choice-6391
+            when:
+              - id: when-a524
+                expression:
+                  simple:
+                    id: simple-3fa5
+                    expression: ${body.get("result").get("min")}
+                steps:
+                  - log:
+                      id: log-108a
+                      message: Ping Success - ${body}
+                  - to:
+                      id: to-064d
+                      uri: sql
+                      parameters:
+                        query: >-
+                          insert into
+                          ping_logs(machine,status,"loss","min","max","avg")
+                          values(:#${exchangeProperty.machine}, :#status,
+                          cast(:#${body.get("result").get("loss")} as DECIMAL),
+                          cast(:#${body.get("result").get("min")} as DECIMAL),
+                          cast(:#${body.get("result").get("max")} as DECIMAL),
+                          cast(:#${body.get("result").get("avg")} as DECIMAL))
+                        dataSource: "#bean:dataSource"
+            otherwise:
+              id: otherwise-0ae1
+              steps:
+                - log:
+                    id: log-3c41
+                    message: Ping Failed - ${body}
+                - to:
+                    id: to-50e3
+                    uri: sql
+                    parameters:
+                      query: >-
+                        insert into ping_logs(machine,status,loss)
+                        values(:#${exchangeProperty.machine},
+                        'ERROR',cast(:#${body.get("result").get("loss")} as
+                        INTEGER))
+                      dataSource: "#bean:dataSource"

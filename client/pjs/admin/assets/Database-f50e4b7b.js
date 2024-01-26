@@ -1,0 +1,1 @@
+import{_ as e,o as s,d as o,e as t}from"./index-e8c48d8b.js";const c={},a={className:"card mt-5 ml-5 mr-5"},n=t("h5",null,"Empty Page",-1),r=t("p",null,"Use this page to start from scratch and place your custom content.",-1),_=[n,r];function d(l,m){return s(),o("div",a,_)}const h=e(c,[["render",d]]);export{h as default};

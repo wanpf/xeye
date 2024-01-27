@@ -765,17 +765,16 @@ onMounted(() => {
 												<ul class="list-none p-0 m-0" v-if="selectRowData.request?.head_json">
 													<li class="border-bottom-1 flex align-items-center py-3 px-5  surface-border flex-wrap">
 															<div class="text-500 w-6 md:w-2 font-medium">path</div>
-															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >{{selectRowData.request.head_json?.path}}</div>
+															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >
+																<Tag v-if="selectRowData.request.head_json?.method" class="mr-2" severity="success">{{selectRowData.request.head_json?.method}}</Tag>
+																{{selectRowData.request.head_json?.path}}
+															</div>
 													</li>
 													<li class="border-bottom-1 flex align-items-center py-3 px-5  surface-border flex-wrap">
 															<div class="text-500 w-6 md:w-2 font-medium">protocol</div>
 															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >
 																<Tag>{{selectRowData.request.head_json?.protocol}}</Tag>
 															</div>
-													</li>
-													<li class="border-bottom-1 flex align-items-center py-3 px-5  surface-border flex-wrap">
-															<div class="text-500 w-6 md:w-2 font-medium">method</div>
-															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >{{selectRowData.request.head_json?.method}}</div>
 													</li>
 												</ul>
 												<TabView class="nopd" v-if="selectRowData.request">
@@ -799,16 +798,17 @@ onMounted(() => {
 										<Accordion class="w-full" :multiple="true" :activeIndex="[0]">
 											<AccordionTab class="mb-2" :header="`Response | ${response.end_time}`" v-for="(response,responseidx) in (selectRowData.response)" :key="responseidx">
 												<ul class="list-none p-0 m-0" v-if="response?.head_json">
-													<li class="border-bottom-1 flex align-items-center py-3 px-5  surface-border flex-wrap">
-															<div class="text-500 w-6 md:w-2 font-medium">protocol</div>
-															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >
-																<Tag>{{response.head_json?.protocol}}</Tag>
-															</div>
-													</li>
+													
 													<li class="border-bottom-1 flex align-items-center py-3 px-5  surface-border flex-wrap">
 															<div class="text-500 w-6 md:w-2 font-medium">status</div>
 															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >
 																<Tag v-if="response.head_json?.status>0" :severity="['','','success','warning','danger','danger'][(response.head_json?.status+'').substr(0,1)]" :value="response.head_json?.status"></Tag>
+															</div>
+													</li>
+													<li class="border-bottom-1 flex align-items-center py-3 px-5  surface-border flex-wrap">
+															<div class="text-500 w-6 md:w-2 font-medium">protocol</div>
+															<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1" >
+																<Tag>{{response.head_json?.protocol}}</Tag>
 															</div>
 													</li>
 												</ul>

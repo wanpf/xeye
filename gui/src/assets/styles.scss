@@ -154,3 +154,22 @@ pre.app-code code{
 	word-break: break-all;
 	padding-right: 30px;
 }
+.nopd.p-tabview .p-tabview-panels{
+	padding: 0;
+}
+.p-accordion .p-accordion-tab:last-child{
+	margin-bottom: 0;
+}
+.p-splitter{
+	border: none;
+}
+.p-tabview .p-tabview-panels{
+	position: relative;
+}
+.p-metergroup-meter-container{
+	height: 10px;
+}
+.p-metergroup-meter{
+	
+	border-radius: 5px;
+}

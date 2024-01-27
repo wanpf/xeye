@@ -18,6 +18,7 @@ import Chips from 'primevue/chips';
 import ColorPicker from 'primevue/colorpicker';
 import Column from 'primevue/column';
 import ColumnGroup from 'primevue/columngroup';
+import MeterGroup from 'primevue/metergroup';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ConfirmPopup from 'primevue/confirmpopup';
 import ContextMenu from 'primevue/contextmenu';
@@ -127,6 +128,7 @@ export function useComponent(app){
 	app.component('Divider', Divider);
 	app.component('Dock', Dock);
 	app.component('Dropdown', Dropdown);
+	app.component('MeterGroup', MeterGroup);
 	app.component('DynamicDialog', DynamicDialog);
 	app.component('Fieldset', Fieldset);
 	app.component('FileUpload', FileUpload);

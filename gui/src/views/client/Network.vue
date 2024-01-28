@@ -358,6 +358,7 @@ const initFilters = () => {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 				protocol: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
 				status: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]},
+				method: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]},
         host: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
         url: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
         request_size: { value: null, matchMode: FilterMatchMode.GREATER_THAN_OR_EQUAL_TO },
@@ -581,7 +582,7 @@ onMounted(() => {
                         </div>
                     </template>
                     <template #empty> No customers found. </template>
-										<Column :showFilterOperator="false" :showFilterMatchModes="false"   field="s.protocol" header="Protocol" style="min-width: 3rem">
+										<Column :showFilterOperator="false" :showFilterMatchModes="false"   field="protocol" header="Protocol" style="min-width: 3rem">
 												<template #body="{ data }">
 													<Tag :severity="data.protocol == 'https'?'success':'info'" :value="data.protocol"></Tag>
 												</template>
@@ -619,6 +620,22 @@ onMounted(() => {
 												</template>
 												<template #filter="{ filterModel }">
 														<InputText type="text" v-model="filterModel.value" class="p-column-filter" placeholder="Search" />
+												</template>
+										</Column>
+										<Column :showFilterOperator="false" :showFilterMatchModes="false"   field="method" header="Method" style="min-width: 3rem">
+												<template #body="{ data }">
+													<Tag :severity="{DELETE:'danger',GET:'',POST:'warning',PUT:'info'}[data.method]" :value="data.method"></Tag>
+												</template>
+												<template #filter="{ filterModel }">
+													<Dropdown v-model="filterModel.value" :options="['GET','POST','DELETE','PUT']" placeholder="Any" class="p-column-filter" :showClear="true">
+													    <template #value="slotProps">
+													        <span :class="'customer-badge status-' + slotProps.value" v-if="slotProps.value">{{ slotProps.value }}</span>
+													        <span v-else>{{ slotProps.placeholder }}</span>
+													    </template>
+													    <template #option="slotProps">
+													        <span :class="'customer-badge status-' + slotProps.option">{{ slotProps.option }}</span>
+													    </template>
+													</Dropdown>
 												</template>
 										</Column>
 										<Column sortable field="request_begin_time" header="Request Time" style="min-width: 6rem">

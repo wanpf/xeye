@@ -61,47 +61,7 @@ curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/os -d "SELEC
   {"response_code":"200","round_trip_time":"1735888","url":"http://www.showip.com/"}
 ]
 ```
-## 5. 上传升级包  
-### 5.1 打包  
-将最新的 pjs 目录，使用如下命令，打包成 pjs.tar 文件   
-*注意：不要使用压缩*
-```bash
-tar cvf pjs.tar pjs
-```
-### 5.2 上传(upload)  
-命令  
-```bash
-curl -v -H "trust: flomesh" --upload-file pjs.tar http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/upload/
-```
-结果  
-```bash
-OK
-```
-## 6. 升级(upgrade)  
-命令
-```bash
-curl -v -H "trust: flomesh" http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/upgrade?pjs.tar
-```
-结果
-```bash
-x pjs/admin/assets/NotFound-7e3d0329.js
-x pjs/admin/assets/Documentation-ec173c4c.css
-x pjs/admin/assets/primeicons-90a58d3a.woff
-x pjs/admin/assets/index-47ce5ea9.js
-x pjs/upload.js
-x pjs/proxy-main.js
-* Connection #0 to host 192.168.122.242 left intact
-```
-## 7. 回滚(rollback)  
-命令
-```bash
-curl -v -H "trust: flomesh" http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/rollback
-```
-结果
-```bash
-OK
-```
-## 8. 设置 system-proxy 为 on (只支持 windows 版本）  
+## 5. 设置 system-proxy 为 on (只支持 windows 版本）  
 命令  
 ```bash
 curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/api/invoke -d '{"verb": "enable-proxy"}'
@@ -115,7 +75,7 @@ curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/api/invoke -
   }
 }
 ```
-## 9. 设置 system-proxy 为 off (只支持 windows 版本）  
+## 6. 设置 system-proxy 为 off (只支持 windows 版本）  
 命令  
 ```bash
 curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/api/invoke -d '{"verb": "disable-proxy"}'
@@ -129,7 +89,7 @@ curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/api/invoke -
   }
 }
 ```
-## 10. 查询 system-proxy 的状态  
+## 7. 查询 system-proxy 的状态  
 命令  
 ```bash
 curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/api/info
@@ -148,3 +108,23 @@ curl -v http://192.168.12.84:8001/52-54-00-B8-84-04_DESKTOP-5SI23LH/api/info
 }
 ```
 其中的 "systemProxy"，on: 设置了系统代理，off: 关闭了 系统代理。  
+## 8. 更新 CA 证书
+命令  
+```bash
+curl -v http://192.168.122.82:6060/api/renew-ca -d '{ "organization": "flomesh", "commonName": "xeye.flomesh.io" }' 
+```
+参数说明  
+organization：组织机构名称，公司名称。  
+commonName：通用名称，一般使用域名。  
+结果
+```bash
+{
+  "status": "OK",
+  "result": {
+    "message": "Succeeded"
+  }
+}
+```
+windows环境，会自动更新CA证书，并且自动导入CA证书。  
+mac环境，需要手动运行导入证书的命令： sudo import-ca.sh   
+

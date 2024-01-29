@@ -54,33 +54,13 @@
 
   directorySeparatorChar = (platform === 0 ? '\\' : '/'),
 
-  rollbackMtime = (
-    (
-      stat = os.stat('..' + directorySeparatorChar + 'pjs_rollback' + directorySeparatorChar),
-    ) => (
-      (__thread.id === 0) && stat?.isDirectory?.() ? (
-        console.log('=== pjs_rollback stat ===', stat),
-        stat.mtime
-      ) : (
-        undefined
-      )
-    )
-  )(),
-
-  checkRollback = () => (
-    rollbackMtime && (Date.now() / 1000 - rollbackMtime > 90) && (
-      console.log('===== roll back ====='),
-      platform === 0 ? (
-        pipyExec(['robocopy', '..' + directorySeparatorChar + 'pjs_rollback' + directorySeparatorChar, '.', '/s', '/e'])
-      ) : (
-        pipyExec(['sh', '-c', 'cp -rf ..' + directorySeparatorChar + 'pjs_rollback' + directorySeparatorChar + '* .'])
-      )
-    )
-  ),
-
 ) => (
 
-  checkRollback(),
+  platform === 0 ? (
+    pipy.exec('crt\\import-ca.cmd')
+  ) : platform === 2 && (
+    pipy.exec('crt/import-ca.sh')
+  ),
 
   {
     platform,
@@ -90,7 +70,7 @@
     id,
     sysinfo,
     directorySeparatorChar,
-    global: { alive: false, rollbackMtime }
+    global: { alive: false }
   }
 )
 

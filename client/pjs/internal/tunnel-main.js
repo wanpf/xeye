@@ -26,7 +26,7 @@
   )(),
 
   allowList = {
-    allow: JSON.decode(pipy.load('allow-list.json'))
+    allow: JSON.decode(new Data('{ "*": true }'))
   },
 
   pipyTunnelActiveConnectionGauge = new stats.Gauge('pipy_tunnel_active_connection', ['source_ip', 'destination']),
@@ -41,14 +41,6 @@
   _target: undefined,
   _serverAddr: undefined,
 })
-
-.watch('allow-list.json')
-.onStart(
-  () => (
-    allowList.allow = JSON.decode(pipy.load('allow-list.json')),
-    new StreamEnd
-  )
-)
 
 .pipeline('startup')
 .handleStreamStart(

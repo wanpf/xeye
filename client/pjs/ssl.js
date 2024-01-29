@@ -36,9 +36,6 @@
   __recordHTTP: 'main',
   __recordRequest: 'main',
   __recordResponse: 'main',
-  __pacDomain: 'pac',
-  __pacProxy: 'pac',
-  __pacIP: 'pac',
 })
 
 .export('ssl', {
@@ -82,14 +79,6 @@
         __recordRequest = insert_message(__recordConnection.id, __recordSession.id, 'https', 0, localTimeString(_requestBeginTime))
       )
     )
-    .use('pac.js')
-    .handleMessageStart(
-      () => (
-        __pacProxy && (
-          __infos.pacProxy = __pacProxy
-        )
-      )
-    )
     .branch(
       config?.configs?.saveHeadAndBody, (
         $=>$
@@ -104,41 +93,15 @@
         _requestSize = (msg?.tail?.headSize || 0) + (msg?.tail?.bodySize || 0),
         update_message(__recordRequest.id, _requestHeadText, _requestBodyBlob, JSON.stringify(msg.tail), localTimeString(_requestEndTime))
       )
-    )
-    .branch(
-      () => __pacProxy, ($=>$
-        .muxHTTP().to($=>$
-          .connectTLS({ sni: () => _sni }).to($=>$
-            .onStart(new Data)
-            .connectHTTPTunnel(
-              () => new Message({
-                method: 'CONNECT',
-                path: __target,
-              })
-            ).to($=>$
-              .muxHTTP().to($=>$
-                .connect(() => __pacProxy, {
-                  ...config?.policies,
-                  onState: ob => (
-                    (ob.state === 'connecting') && (__recordConnection.server_ip = ob.remoteAddress, __recordConnection.server_port = ob.remotePort), __infos[ob.state + 'TS'] = Date.now()
-                  )
-                })
-              )
-            )
+    )       
+    .muxHTTP().to($=>$
+      .connectTLS({ sni: () => _sni }).to($=>$
+        .connect(() => __target, {
+          ...config?.policies,
+          onState: ob => (
+            (ob.state === 'connecting') && (__recordConnection.server_ip = ob.remoteAddress, __recordConnection.server_port = ob.remotePort), __infos[ob.state + 'TS'] = Date.now()
           )
-        )
-      ),
-      () => (__pacProxy !== null), ($=>$
-        .muxHTTP().to($=>$
-          .connectTLS({ sni: () => _sni }).to($=>$
-            .connect(() => __target, {
-              ...config?.policies,
-              onState: ob => (
-                (ob.state === 'connecting') && (__recordConnection.server_ip = ob.remoteAddress, __recordConnection.server_port = ob.remotePort), __infos[ob.state + 'TS'] = Date.now()
-              )
-            })
-          )
-        )
+        })
       )
     )
     .handleMessageStart(

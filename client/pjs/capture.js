@@ -3,14 +3,10 @@
 
   startTime = new Date(),
 
-  capture = {},
-
 ) => (
 
-  capture.record = insert_capture(startTime.toISOString(), localTimeString(startTime)),
-
   {
-    capture,
+    capture: { record: insert_capture(startTime.toISOString(), localTimeString(startTime)) }
   }
 
 ))()

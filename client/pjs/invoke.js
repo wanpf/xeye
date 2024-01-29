@@ -1,5 +1,5 @@
 ((
-  { id, platform, pipyExec, directorySeparatorChar, global } = pipy.solve('utils.js'),
+  { id, platform } = pipy.solve('utils.js'),
 
   { insert_log_db, } = pipy.solve('db.js'),
 
@@ -76,7 +76,18 @@
     invoke(
       () => (_obj = JSON.decode(msg.body)) && (
         _verb = _obj.verb,
-        _verb === 'enable-proxy' ? (
+        _verb === 'renew-ca' ? (
+          _obj.target = JSON.decode(new Data(_obj.target)),
+          _obj.target?.organization && _obj.target?.commonName ? (
+            platform === 0 ? (
+              _cmd = [ 'crt\\openssl.exe', 'req', '-subj', '/CN=' + _obj.target.commonName + '/OU=IT/C=CN/O=' + _obj.target.organization, '-new', '-newkey', 'rsa:2048', '-sha256', '-days', '365', '-nodes', '-config', 'crt\\openssl.cnf', '-x509', '-keyout', 'crt\\CA.key', '-out', 'crt\\CA.crt' ]
+            ) : (
+              _cmd = [ 'openssl', 'req', '-subj', '/CN=' + _obj.target.commonName + '/OU=IT/C=CN/O=' + _obj.target.organization, '-new', '-newkey', 'rsa:2048', '-sha256', '-days', '365', '-nodes', '-x509', '-keyout', 'crt/CA.key', '-out', 'crt/CA.crt' ]
+            )
+          ) : (
+            _message = new Message({status: 200}, "Bad organization or commonName")
+          )
+        ) : _verb === 'enable-proxy' ? (
           _cmd = ['.\\tools\\enable.cmd']
         ) : _verb === 'disable-proxy' ? (
           _cmd = ['.\\tools\\disable.cmd']
@@ -91,31 +102,8 @@
         ) : _verb === 'osquery' ? (
           platform === 0 ? (
             _cmd = ['.\\tools\\osqueryi.exe', '--json', _obj.target]
-            , console.log('osquery command:', _cmd)
           ) : (
             _cmd = ['tools/osqueryi', '--json', _obj.target]
-          )
-        ) : _verb === 'upgrade' ? (
-          platform === 0 ? (
-            pipyExec(['robocopy', '..' + directorySeparatorChar + 'pjs' + directorySeparatorChar, '..' + directorySeparatorChar + 'pjs_rollback' + directorySeparatorChar, '/s', '/e'])
-          ) : (
-            pipyExec(['cp', '-rf', '..' + directorySeparatorChar + 'pjs', '..' + directorySeparatorChar + 'pjs_rollback'])
-          ),
-          _cmd = ['tar', '-C', '..', '-xvf', '..' + directorySeparatorChar + _obj.target.split('?')?.[1]]
-          , console.log('=== upgrade ===', _cmd)
-        ) : _verb === 'rollback' ? (
-          os.stat('..' + directorySeparatorChar + 'pjs_rollback_last' + directorySeparatorChar)?.isDirectory?.() ? (
-            platform === 0 ? (
-              pipyExec(['cmd.exe', '/C', 'move', '/Y', '..' + directorySeparatorChar + 'pjs_rollback_last', '..' + directorySeparatorChar + 'pjs_rollback'])
-            ) : (
-              pipyExec(['mv', '-f', '..' + directorySeparatorChar + 'pjs_rollback_last', '..' + directorySeparatorChar + 'pjs_rollback'])
-            ),
-            timestamp = Date.now(),
-            restart = true,
-            _message = new Message({status: 200}, "OK")
-            , console.log('=== rollback ===', restart)
-          ) : (
-            _message = new Message({status: 200}, "No available rollback detected.")
           )
         ) : (
           _cmd = null
@@ -149,11 +137,10 @@
 
 .pipeline('exec')
 .onStart(new Data)
-.exec(() => _cmd)
+.exec(() => _cmd, { stdout: true, stderr: true })
 .replaceData(
   dat => (
     dat.size > 0 && (
-      // console.log('exec data size:', dat.size),
       _data.push(dat)
     ),
     new Data
@@ -166,24 +153,25 @@
     _data ? (
       invoke(
         () => (
-          _verb === 'enable-proxy' || _verb === 'disable-proxy' ? (
+          _verb === 'renew-ca' ? (
+            _data.toString().includes('++++++++++++++++++++') ? (
+              _obj = { message: 'Succeeded' },
+              timestamp = Date.now(),
+              restart = true,
+              console.log('=== renew-ca restart ===', restart)
+            ) : (
+              _obj = { message: 'Failed' }
+            )
+          ) : _verb === 'enable-proxy' || _verb === 'disable-proxy' ? (
             _obj = { output: _data.toString() },
-            insert_log_db(id, 'proxy', _verb)
-            , console.log('system-proxy:', _verb)
+            insert_log_db(id, 'proxy', _verb),
+            console.log('system-proxy:', _verb)
           ) : _verb === 'ping' ? (
             _obj = ping(new Data(_data.toArray().filter(c => c < 0x80)).toString())
           ) : _verb === 'download' ? (
             _obj = { status: 'OK', time: Date.now() - _startTime, "size": _data.size }
           ) : _verb === 'osquery' ? (
-            // _obj = JSON.decode(new Data(_data.toArray().filter(c => c < 0x80)))
             _obj = _data
-          ) : _verb === 'upgrade' ? (
-            _obj = _data,
-            new Data(_data.toArray().filter(c => c < 0x80)).toString().includes('pjs/internal/tunnel-main.js') && (
-              timestamp = Date.now(),
-              restart = true
-              , console.log('=== restart ===', restart)
-            )
           ) : (
             _obj = {}
           ),
@@ -191,9 +179,6 @@
           [
             new MessageStart({ status: 200 }),
             _verb === 'osquery' ? (
-              // new Data(JSON.encode(_obj))
-              _obj
-            ) : _verb === 'upgrade' ? (
               _obj
             ) : (_obj instanceof Array || Object.keys(_obj || {}).length > 0) ? (
               new Data(JSON.stringify({ status: 'OK', result: _obj }, null, 2))
@@ -221,28 +206,12 @@
 .onStart(
   () => (
     (__thread.id === 0) && (Date.now() - timestamp > 3000) && (
-      restart ? (
+      restart && (
         restart = false,
-        pipy.restart()
-        , console.log('=== pipy.restart() ===')
-      ) : global.rollbackMtime && (
-        os.stat('..' + directorySeparatorChar + 'pjs_rollback_last' + directorySeparatorChar)?.isDirectory?.() && (
-          platform === 0 ? (
-            pipyExec(['cmd.exe', '/C', 'move', '/Y', '..' + directorySeparatorChar + 'pjs_rollback_last', '..' + directorySeparatorChar + 'pjs_rollback_' + Date.now()])
-          ) : (
-            pipyExec(['mv', '-f', '..' + directorySeparatorChar + 'pjs_rollback_last', '..' + directorySeparatorChar + 'pjs_rollback_' + Date.now()])
-          )
-        ),
-        platform === 0 ? (
-          pipyExec(['cmd.exe', '/C', 'move', '/Y', '..' + directorySeparatorChar + 'pjs_rollback', '..' + directorySeparatorChar + 'pjs_rollback_last'])
-        ) : (
-          pipyExec(['mv', '-f', '..' + directorySeparatorChar + 'pjs_rollback', '..' + directorySeparatorChar + 'pjs_rollback_last'])
-        ),
-        global.rollbackMtime = undefined
-        , console.log('=== Archive rollback directory ===')
+        pipy.restart(),
+        console.log('=== pipy.restart() ===')
       )
     ),
-    // console.log('task ......'),
     new StreamEnd
   )
 )

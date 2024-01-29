@@ -40,9 +40,6 @@ pipy({
   __recordRequest: 'main',
   __recordResponse: 'main',
   __target: 'ssl',
-  __pacDomain: 'pac',
-  __pacProxy: 'pac',
-  __pacIP: 'pac',
 })
 
 .pipeline('proxy')
@@ -97,7 +94,6 @@ pipy({
         _domain = _target,
         _target = _target + ':80'
       ),
-      __pacDomain = _domain,
       msg.head.headers['x-b3-traceid'] = msg.head.headers['x-b3-spanid'] = algo.uuid().substring(0, 18).replaceAll('-', '')
     ),
     config?.configs?.saveHeadAndBody && (
@@ -106,17 +102,6 @@ pipy({
     ),
     __recordHTTP = insert_http(__recordSession.id, _type, msg.head.method, 0, _domain, msg.head.path),
     __recordRequest = insert_message(__recordConnection.id, __recordSession.id, _type, 0, localTimeString())
-  )
-)
-.use('pac.js')
-.handleMessageStart(
-  msg => (
-    __pacProxy && (
-      msg.head.path = _origPath,
-      _requestHeadText = JSON.stringify(msg.head, null, 2),
-      _target = __pacProxy,
-      __infos.pacProxy = __pacProxy
-    )
   )
 )
 .branch(
@@ -183,7 +168,6 @@ pipy({
       _domain = _target,
       _target = _target + ':443'
     ),
-    __pacDomain = _domain,
     new Message({ status: 200 })
   )
 ).to(

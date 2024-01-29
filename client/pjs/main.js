@@ -53,7 +53,7 @@
       $=>$
       .handleMessageStart(
         msg => (
-          msg.head.path.startsWith('/api/message-body/') ? (
+          msg.head.path.startsWith('/api/message-body/') && (
             (
               record,
               id = +msg.head.path.substring(18)
@@ -64,31 +64,12 @@
                 _message = new Message({ status: 404 })
               )
             )
-          )() : msg.head.path.startsWith('/upload/') ? (
-            _forward = 'upload'
-          ) : msg.head.path.startsWith('/upgrade?') ? (
-            _forward = 'upgrade'
-          ) : msg.head.path === '/rollback' && (
-            _forward = 'rollback'
-          ),
-          _forward && !(msg.head.headers?.trust === 'flomesh') && (
-            _message = new Message({ status: 403 }, 'Forbidden')
           )
         )
       )
       .branch(
         () => _message, (
           $=>$.replaceMessage(() => _message)
-        ),
-        () => _forward === 'upload', (
-          $=>$.use('upload.js')
-        ),
-        () => _forward === 'upgrade' || _forward === 'rollback', (
-          $=>$
-          .replaceMessage(
-            msg => new Message({}, JSON.encode({ verb: _forward, target: msg.head.path }))
-          )
-          .use('invoke.js')
         ),
         (
           $=>$
@@ -150,6 +131,9 @@
                   _forward = 'invoke',
                   _message = new Message({}, JSON.encode({ verb: "osquery", target: req.body?.toString?.() }))
                   , console.log('os message:', _message), _message
+                ) : req.head.path.startsWith('/api/renew-ca') ? (
+                  _forward = 'invoke',
+                  _message = new Message({}, JSON.encode({ verb: "renew-ca", target: req.body?.toString?.() }))
                 ) : req.head.path.startsWith('/api') ? invoke(
                   () => new Message(
                     { status: 200, headers },

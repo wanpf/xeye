@@ -50,14 +50,4 @@ const removeTag = (index) => {
 </template>
 
 <style scoped lang="scss">
-	.add-tag-input{
-		border:none;
-		background: transparent;
-		outline: none;
-		width:60px;
-		transition: width .3s;
-	}
-	.add-tag-input:focus{
-		width:120px;
-	}
 </style>

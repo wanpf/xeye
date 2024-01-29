@@ -23,6 +23,14 @@ export default class PipyProxyService {
 	info({id}) {
 		return request(this.beforePath(id)+'/api/info', METHOD.GET);
 	}
+	getCa({id}) {
+		return request(this.beforePath(id)+'/api/get-ca', METHOD.GET);
+	}
+	renewCa({id, organization, commonName}) {
+		return request(this.beforePath(id)+'/api/renew-ca', METHOD.POST, {
+			organization, commonName
+		});
+	}
 	invoke({
 		id,
 		verb, 

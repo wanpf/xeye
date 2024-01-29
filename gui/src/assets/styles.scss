@@ -173,3 +173,34 @@ pre.app-code code{
 	
 	border-radius: 5px;
 }
+
+.add-tag-input{
+	border:none;
+	background: transparent;
+	outline: none;
+	width:60px;
+	transition: width .3s;
+}
+.add-tag-input:focus{
+	width:120px;
+}
+.add-tag-input.xxl{
+	width:140px;
+}
+.add-tag-input.xxl:focus{
+	width:200px;
+}
+.add-tag-input.xl{
+	width:100px;
+}
+.add-tag-input.xl:focus{
+	width:160px;
+}
+.fr{
+	float: right;
+}
+.min-btn{
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+}

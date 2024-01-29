@@ -2,20 +2,27 @@
 import { ref, onMounted } from 'vue';
 import PipyProxyService from '@/service/PipyProxyService';
 import { useRoute } from 'vue-router'
+import { useToast } from "primevue/usetoast";
 import { isAdmin } from "@/service/common/authority-utils";
 import store from "@/store";
 
 const route = useRoute();
+const toast = useToast();
 const pipyProxyService = new PipyProxyService();
 const info = ref({
-  "hostname": "DESKTOP-5SI23LH",
-  "osName": "Microsoft Windows 10",
-  "osVersion": "10.0.19045  Build 19045",
-  "lastBootUptime": "2023/12/26, 10:27:09",
-  "cpuInfo": "Intel64 Family 6 Model 154 Stepping 3 GenuineIntel ~2496 Mhz",
-  "ipAddress": "192.168.122.242",
-  "mac": "52-54-00-B8-84-04"
+  "hostname": "-",
+  "osName": "-",
+  "osVersion": "-",
+  "lastBootUptime": "-",
+  "cpuInfo": "-",
+  "ipAddress": "-",
+  "mac": "-"
 });
+const ca = ref({
+	organization:'',
+	commonName: ''
+});
+const tags = ref([]);
 const search = () => {
 	store.commit('account/setClient', route.params?.id);
 	pipyProxyService.info({
@@ -25,9 +32,32 @@ const search = () => {
 			info.value = res?.data;
 		})
 		.catch(err => console.log('Request Failed', err)); 
+		
+		
+	pipyProxyService.getCa({
+		id: route.params?.id
+	})
+		.then(res => {
+			ca.value = res?.data;
+		})
+		.catch(err => console.log('Request Failed', err)); 
 }
-const tags = ref([]);
 
+const commitCa = () => {
+	pipyProxyService.renewCa({
+		id: route.params?.id,
+		organization: ca.value?.organization,
+		commonName: ca.value?.commonName,
+	})
+		.then(res => {
+			if(res.data?.status == 'OK'){
+				toast.add({ severity: 'success', summary:'Tips', detail: 'Modified successfully.', life: 3000 });
+			} else{
+				toast.add({ severity: 'error', summary:'Tips', detail: 'Modified Failed.', life: 3000 });
+			}
+		})
+		.catch(err => console.log('Request Failed', err)); 
+}
 const changeTag = (tags) => {
 	if(!!route.params?.id){
 		localStorage.setItem('tagList', JSON.stringify(tags.value));
@@ -62,7 +92,7 @@ const home = ref({
 		<Breadcrumb :home="home" :model="[{label:route.params?.id}]" />
 	</div>
 	<div class="pt-5 pl-5 pr-5">
-		<BlockViewer  text="Json" tag="Client" header="Host Information" :code="JSON.stringify(info,null,'\t')" containerClass="surface-section px-4 py-8 md:px-6 lg:px-8" >
+		<BlockViewer  text="Json" tag="Client" header="Host Information" :code="JSON.stringify(info,null,'\t')" containerClass="surface-section px-4 py-7 md:px-6 lg:px-7" >
 				<div class="surface-section">
 						<div class="font-medium text-3xl text-900 mb-3">{{info.hostname}}</div>
 						<div class="text-500 mb-5">{{info.ipAddress}}</div>
@@ -85,10 +115,6 @@ const home = ref({
 										<div class="text-500 w-6 md:w-2 font-medium">CPU Info</div>
 										<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">{{info.cpuInfo||'-'}}</div>
 								</li>
-								<li class="flex align-items-center py-3 px-2 border-top-1 surface-border flex-wrap">
-										<div class="text-500 w-6 md:w-2 font-medium">Ip Address</div>
-										<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">{{info.ipAddress||'-'}}</div>
-								</li>
 								<li class="flex align-items-center py-3 px-2 border-top-1  surface-border flex-wrap">
 										<div class="text-500 w-6 md:w-2 font-medium">MAC</div>
 										<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">{{info.mac||'-'}}</div>
@@ -99,6 +125,29 @@ const home = ref({
 										<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">
 											<ChipList v-if="!!route.params?.id" v-model:list="tags[route.params.id]" @change="changeTag"/>
 											<ChipList v-else v-model:list="tags" @change="changeTag"/>
+										</div>
+								</li>
+								
+								<li class="flex align-items-center py-3 px-2 border-bottom-1 surface-border flex-wrap">
+										<div class="text-500 w-6 md:w-2 font-medium">CA Certificate</div>
+										<div class="text-900 w-full md:w-8 md:flex-order-0 flex-order-1">
+											<Chip class="pl-0 pr-3 mr-2">
+											    <span class="bg-primary border-circle w-2rem h-2rem flex align-items-center justify-content-center">
+														<i class="pi pi-sitemap"/>
+													</span>
+											    <span class="ml-2 font-medium">
+														<InputText placeholder="Organization" class="add-tag-input xl" :unstyled="true" v-model="ca.organization" type="text" />
+													</span>
+											</Chip>
+											<Chip class="pl-0 pr-3 mr-2">
+											    <span class="bg-primary border-circle w-2rem h-2rem flex align-items-center justify-content-center">
+														<i class="pi pi-bookmark"/>
+													</span>
+											    <span class="ml-2 font-medium">
+														<InputText placeholder="Common Name" class="add-tag-input xxl" :unstyled="true" v-model="ca.commonName" type="text" />
+													</span>
+											</Chip>
+											<Button class="min-btn" rounded :disabled="ca.organization.length == 0 || ca.commonName.length == 0" icon="pi pi-check" aria-label="Submit" size="small" @click="commitCa"/>
 										</div>
 								</li>
 						</ul>

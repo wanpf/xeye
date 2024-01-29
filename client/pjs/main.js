@@ -157,8 +157,7 @@
                       _records = db.sql(req.body.toString()).exec(),
                       JSON.encode((_records || []).map(
                         r => (
-                          r.request_body && (r.request_body = r.request_body.toString('base64')),
-                          r.response_body && (r.response_body = r.response_body.toString('base64')),
+                          r.body && (r.body = r.body.toString('base64')),
                           r
                         )
                       ))

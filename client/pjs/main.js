@@ -53,7 +53,7 @@
       $=>$
       .handleMessageStart(
         msg => (
-          msg.head.path.startsWith('/api/message-body/') ? (
+          msg.head.path.startsWith('/api/message-body/') && (
             (
               record,
               id = +msg.head.path.substring(18)
@@ -64,8 +64,6 @@
                 _message = new Message({ status: 404 })
               )
             )
-          ) : msg.head.path === '/api/get-ca' && (
-            _message = new Message({ status: 200, headers: { 'content-type': 'application/x-x509-ca-cert'} }, pipy.load('crt' + directorySeparatorChar + 'CA.crt'))
           )
         )
       )
@@ -136,6 +134,9 @@
                 ) : req.head.path.startsWith('/api/renew-ca') ? (
                   _forward = 'invoke',
                   _message = new Message({}, JSON.encode({ verb: "renew-ca", target: req.body?.toString?.() }))
+                ) : req.head.path.startsWith('/api/get-ca') ? (
+                  _forward = 'invoke',
+                  _message = new Message({}, JSON.encode({ verb: "get-ca" }))
                 ) : req.head.path.startsWith('/api') ? invoke(
                   () => new Message(
                     { status: 200, headers },

@@ -3,6 +3,28 @@
 
   { insert_log_db, } = pipy.solve('db.js'),
 
+  getArgs = arg => (
+    (
+      args = {},
+      arr,
+      kv,
+    ) => (
+      arg && (
+        (arr = arg.split(',')) && (
+          arr.forEach(
+            p => (
+              kv = p.split('='),
+              (kv.length > 1) && (
+                args[kv[0].trim()] = kv[1].trim()
+              )
+            )
+          )
+        ),
+        args
+      )
+    )
+  )(),
+
   ping = data => (
     platform === 0 ? (
       data?.split?.('\n')?.filter?.(e => e.includes('%') || e.includes(' = '))?.map?.(
@@ -87,6 +109,12 @@
           ) : (
             _message = new Message({status: 200}, "Bad organization or commonName")
           )
+        ) : _verb === 'get-ca' ? (
+          platform === 0 ? (
+            _cmd = [ 'crt\\openssl.exe', 'x509', '-text', '-in', 'crt\\CA.crt' ]
+          ) : (
+            _cmd = [ 'openssl', 'x509', '-text', '-in', 'crt/CA.crt' ]
+          )
         ) : _verb === 'enable-proxy' ? (
           _cmd = ['.\\tools\\enable.cmd']
         ) : _verb === 'disable-proxy' ? (
@@ -162,6 +190,9 @@
             ) : (
               _obj = { message: 'Failed' }
             )
+          ) : _verb === 'get-ca' ? (
+            _obj = getArgs(_data.toString().split('\n').filter(e => e.includes('Subject:'))?.[0]?.split(':')?.[1] || ''),
+            _obj = JSON.encode({ organizationUnit: _obj.OU, countryName: _obj.C, organization: _obj.O, commonName: _obj.CN })
           ) : _verb === 'enable-proxy' || _verb === 'disable-proxy' ? (
             _obj = { output: _data.toString() },
             insert_log_db(id, 'proxy', _verb),
@@ -179,6 +210,8 @@
           [
             new MessageStart({ status: 200 }),
             _verb === 'osquery' ? (
+              _obj
+            ) : (_verb === 'get-ca') ? (
               _obj
             ) : (_obj instanceof Array || Object.keys(_obj || {}).length > 0) ? (
               new Data(JSON.stringify({ status: 'OK', result: _obj }, null, 2))

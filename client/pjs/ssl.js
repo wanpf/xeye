@@ -93,7 +93,7 @@
         _requestSize = (msg?.tail?.headSize || 0) + (msg?.tail?.bodySize || 0),
         update_message(__recordRequest.id, _requestHeadText, _requestBodyBlob, JSON.stringify(msg.tail), localTimeString(_requestEndTime))
       )
-    )       
+    )
     .muxHTTP().to($=>$
       .connectTLS({ sni: () => _sni }).to($=>$
         .connect(() => __target, {

@@ -270,10 +270,4 @@ pipy({
   )
 )
 
-.listen(config?.karavanListen, { idleTimeout: 600 })
-.demuxHTTP().to(
-  $=>$.muxHTTP().to(
-    $=>$.connect(os.env.KARAVAN_URL ||'192.168.10.85:38080')
-  )
-)
 ))()

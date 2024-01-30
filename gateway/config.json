@@ -1,7 +1,6 @@
 {
-  "listen": "0.0.0.0:8000",
+  "listen": "0.0.0.0:7070",
   "guiListen": "0.0.0.0:8001",
-  "karavanListen": "0.0.0.0:8010",
   "tlsCert": "tls/ca.crt",
   "tlsKey": "tls/ca.key",
   "tlsCA": "tls/ca.crt",

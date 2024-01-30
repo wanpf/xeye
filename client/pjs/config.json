@@ -23,7 +23,7 @@
   },
   "internal": {
     "reverseServer": {
-      "target": "bastion.flomesh.cn:38000",
+      "target": "localhost:7070",
       "idleTimeout": "600s",
       "tlsCert": "internal/tls/client.crt",
       "tlsKey": "internal/tls/client.key",

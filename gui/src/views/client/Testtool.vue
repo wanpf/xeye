@@ -72,14 +72,15 @@ onBeforeUnmount(() => {
     TerminalService.off('command', commandHandler);
 })
 const changeProxy = () => {
-		pipyProxyService.invoke({
-			id: route.params?.id,
-			verb: systemProxy.value?"enable-proxy":"disable-proxy", 
-		})
-		.then(res => {
-		})
-		.catch(err => {
-		}); 
+	systemProxy.value = !systemProxy.value;
+	pipyProxyService.invoke({
+		id: route.params?.id,
+		verb: systemProxy.value?"enable-proxy":"disable-proxy", 
+	})
+	.then(res => {
+	})
+	.catch(err => {
+	}); 
 }
 const result = ref()
 const togHistory = (val) => {
@@ -225,7 +226,6 @@ const watchEnter = (e) => {
 			-->
 		</template>
 	</Card>
-	
 	<div class="text-center mt-3">
 		
 		<Chip class="pl-0 pr-3">
@@ -255,11 +255,9 @@ const watchEnter = (e) => {
 				</span>
 				<span class="ml-2 font-medium">DB Query</span>
 		</Chip>
-		
-		
 		<Chip class="ml-2 pl-0 pr-3 relative" style="vertical-align: middle;top:-2px">
 				<span class=" w-3rem h-2rem flex align-items-center justify-content-center">
-					<InputSwitch class="relative" style="left:2px" @change="changeProxy"  v-model="systemProxy" />
+					<InputSwitch class="relative" style="left:2px" @click="changeProxy"  v-model="systemProxy" />
 				</span>
 				<span class="ml-2 font-medium">System Proxy</span>
 		</Chip>
